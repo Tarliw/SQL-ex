@@ -247,3 +247,109 @@ FROM Product
 WHERE type = 'PC'
 GROUP BY maker
 HAVING COUNT(model) >= 3
+
+-- Задание: 21
+-- Найдите максимальную цену ПК, выпускаемых каждым производителем, у которого есть модели в таблице PC.
+-- Вывести: maker, максимальная цена.
+
+SELECT
+  t1.maker,
+  max(t2.price)
+FROM Product t1
+INNER JOIN pc t2
+ON t1.model=t2.model
+GROUP by t1.maker
+
+-- Задание: 22
+-- Для каждого значения скорости ПК, превышающего 600 МГц, определите среднюю цену ПК с такой же скоростью. 
+-- Вывести: speed, средняя цена.
+
+SELECT
+  speed,
+  avg(price)
+FROM PC
+WHERE speed>600
+GROUP BY speed
+
+
+--Задание: 23 
+--Найдите производителей, которые производили бы как ПК
+--со скоростью не менее 750 МГц, так и ПК-блокноты со скоростью не менее 750 МГц.
+--Вывести: Maker
+
+SELECT distinct maker
+FROM Product
+JOIN PC ON Product.model = PC.model
+WHERE speed >= 750 and maker IN
+(
+  SELECT maker
+  FROM Product
+  JOIN Laptop ON Product.model = Laptop.model
+  WHERE speed >= 750
+)
+
+--Задание: 24
+--Перечислите номера моделей любых типов, имеющих самую высокую цену по всей имеющейся в базе данных продукции.
+
+SELECT model
+FROM 
+(
+  SELECT model, price
+  FROM PC
+  UNION
+  SELECT model, price
+  FROM Laptop
+  UNION
+  SELECT model, price
+  FROM Printer
+) t1
+WHERE price = 
+(
+  SELECT MAX(price)
+  FROM 
+    (
+      SELECT price
+      FROM PC
+      UNION
+      SELECT price
+      FROM Laptop
+      UNION
+      SELECT price
+      FROM Printer
+    ) t2
+)
+
+-- Задание: 25
+-- Найдите производителей принтеров, которые производят ПК с наименьшим объемом RAM и с самым быстрым процессором 
+-- среди всех ПК, имеющих наименьший объем RAM. 
+-- Вывести: Maker
+
+SELECT DISTINCT maker
+FROM product
+WHERE model IN 
+  (
+  SELECT model
+  FROM PC
+  WHERE ram = 
+  (
+    SELECT min(ram)
+	FROM PC
+  )
+  AND speed = 
+    (
+    SELECT max(speed)
+	FROM PC
+	WHERE ram = 
+	  (
+	  SELECT min(ram)
+	  FROM PC
+	  )
+	)
+  )
+AND maker in 
+(
+  SELECT distinct maker
+  FROM Product
+  WHERE type = 'Printer'
+)
+
