@@ -353,3 +353,109 @@ AND maker in
   WHERE type = 'Printer'
 )
 
+-- Задание: 26
+-- Найдите среднюю цену ПК и ПК-блокнотов, выпущенных производителем A (латинская буква). 
+-- Вывести: одна общая средняя цена.
+
+SELECT AVG(price)
+FROM 
+(
+  SELECT code, price, pc.model--, ram, hd
+  FROM pc
+  WHERE model IN 
+  (
+    SELECT model
+    FROM product
+    WHERE maker='A'
+  )
+  UNION
+  SELECT code, price, laptop.model--, ram, hd
+  FROM laptop
+  WHERE model IN 
+  (
+    SELECT model
+    FROM product
+    WHERE maker='A'
+  )
+) t1
+
+-- Задание: 27
+-- Найдите средний размер диска ПК каждого из тех производителей, которые выпускают и принтеры. 
+-- Вывести: maker, средний размер HD.
+
+SELECT maker, AVG(hd) as avg_HD
+FROM product t1 
+JOIN pc t2 
+ON t1.model=t2.model
+WHERE maker IN 
+(
+SELECT maker
+FROM product
+WHERE type='printer'
+)
+GROUP BY maker
+
+-- Задание: 28 
+-- Используя таблицу Product, определить количество производителей, выпускающих по одной модели.
+
+SELECT count(maker) as qtty
+FROM product
+WHERE maker IN
+(
+SELECT distinct maker FROM product 
+GROUP BY maker
+HAVING count(model)=1
+)
+-- --//--
+-- SELECT distinct count(maker) as qtty
+-- FROM product
+-- WHERE maker IN
+-- (
+-- SELECT maker FROM product 
+-- GROUP BY maker
+-- HAVING count(model)=1
+-- )
+-- --//--
+-- SELECT count(maker) as qtty 
+-- FROM (
+-- SELECT distinct maker
+-- FROM product 
+-- GROUP BY maker 
+-- HAVING COUNT(model) = 1) AS prod 
+
+-- Задание: 29 
+-- В предположении, что приход и расход денег на каждом пункте приема фиксируется не чаще 
+-- одного раза в день [т.е. первичный ключ (пункт, дата)], 
+-- написать запрос с выходными данными (пункт, дата, приход, расход). 
+-- Использовать таблицы Income_o и Outcome_o.
+
+SELECT t1.point, t1.date, inc, out
+FROM Income_o t1
+LEFT JOIN Outcome_o t2
+on t1.point = t2.point and t1.date= t2.date
+UNION
+SELECT t2.point, t2.date, inc, out
+FROM Outcome_o t2
+LEFT JOIN Income_o t1
+on t1.point = t2.point and t1.date= t2.date
+
+-- Задание: 30
+-- В предположении, что приход и расход денег на каждом пункте приема фиксируется произвольное число раз 
+-- (первичным ключом в таблицах является столбец code), требуется получить таблицу, 
+-- в которой каждому пункту за каждую дату выполнения операций будет соответствовать одна строка.
+-- Вывод: point, date, суммарный расход пункта за день (out), суммарный приход пункта за день (inc). 
+-- Отсутствующие значения считать неопределенными (NULL).
+
+SELECT point, date, SUM(sum_out), SUM(sum_inc)
+FROM 
+( 
+  SELECT point, date, SUM(inc) as sum_inc, null as sum_out 
+  FROM Income 
+  GROUP by point, date
+UNION
+  SELECT point, date, null as sum_inc, SUM(out) as sum_out 
+  FROM Outcome 
+  GROUP by point, date 
+) as t
+GROUP by point, date 
+ORDER by point
