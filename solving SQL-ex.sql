@@ -459,3 +459,77 @@ UNION
 ) as t
 GROUP by point, date 
 ORDER by point
+
+-- Задание: 31 
+-- Для классов кораблей, калибр орудий которых не менее 16 дюймов, 
+-- укажите класс и страну.
+
+SELECT class, country
+FROM classes
+WHERE bore >= 16
+
+-- Задание: 32 
+-- Одной из характеристик корабля является половина куба калибра его главных орудий (mw). 
+-- С точностью до 2 десятичных знаков определите среднее значение mw для кораблей каждой страны, 
+-- у которой есть корабли в базе данных.
+
+SELECT
+  country,
+  cast(avg((power(bore,3)/2)) as numeric(6,2)) as mw
+FROM 
+  (select 
+    country, 
+    classes.class, 
+    bore, 
+    name 
+  from classes 
+  left join ships on classes.class = ships.class
+  union
+  select  
+    country, 
+    class, 
+    bore, 
+    ship 
+  from classes t1 
+  left join outcomes t2 on t1.class = t2.ship
+  where ship = class and ship not in (select name from ships)) a
+WHERE name IS NOT NULL 
+GROUP BY country
+
+-- Задание: 33 
+-- Укажите корабли, потопленные в сражениях в Северной Атлантике (North Atlantic). 
+-- Вывод: ship.
+
+SELECT
+  ship
+FROM Battles b
+LEFT JOIN Outcomes o
+  on o.battle = b.name
+WHERE 
+  o.result = 'sunk' and b.name = 'North Atlantic'
+
+-- Задание: 34
+-- По Вашингтонскому международному договору от начала 1922 г. запрещалось строить линейные корабли 
+-- водоизмещением более 35 тыс.тонн. Укажите корабли, нарушившие этот договор 
+-- (учитывать только корабли c известным годом спуска на воду). Вывести названия кораблей.
+
+SELECT
+  ships.name
+FROM Classes, Ships
+WHERE
+  launched >= 1922 and
+  displacement > 35000 and
+  type = 'bb' and
+  Ships.class = Classes .class
+
+-- Задание: 35 
+-- В таблице Product найти модели, которые состоят только из цифр или только из латинских букв (A-Z, без учета регистра).
+-- Вывод: номер модели, тип модели.
+
+SELECT
+  model, type
+FROM
+  Product
+WHERE 
+  model not LIKE '%[^a-zA-Z]%' or 
+  model not LIKE '%[^0-9]%'
